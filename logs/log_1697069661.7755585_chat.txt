@@ -1,0 +1,31 @@
+<<BEGIN INTAKE CHAT>>
+
+USER: i ned to create an email to caroline.charter@oracle.com
+
+INTAKE: Sure, I can help with that. What is the subject of the email you want to send to caroline.charter@oracle.com?
+
+USER: Proposal for Cloud
+
+INTAKE: Great. Now, could you please provide me with the main points you would like to include in the body of your email regarding the Cloud proposal?
+
+USER: i want to share that I want to do a specialization
+
+INTAKE: Understood. Could you please specify the area or field in which you are planning to specialize?
+
+USER: Cloud and it will be just like the other specializations
+
+INTAKE: Thank you for the information. Could you please provide more details about how this Cloud specialization will be similar to the other specializations?
+
+USER: she will know.  it consists of onboard, train, got to market and manage
+
+INTAKE: Understood. Could you please provide more details about the timeline or any specific dates related to the onboarding, training, go-to-market, and management phases of this Cloud specialization?
+
+USER: i need her to approve my idea by next week
+
+INTAKE: Understood. Do you have any specific points or arguments you would like to include in your email to convince Caroline Charter to approve your idea?
+
+USER: and also to get management on board with the plan
+
+INTAKE: Sure. Could you please provide some details or arguments you plan to use to convince the management to get on board with your plan?
+
+<<END INTAKE CHAT>>

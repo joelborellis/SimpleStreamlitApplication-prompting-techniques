@@ -1,0 +1,11 @@
+python-dotenv
+beautifulsoup4
+pandas
+requests
+azure-search-documents --pre
+openai
+tenacity
+azure-identity
+langchain
+tiktoken
+streamlit
