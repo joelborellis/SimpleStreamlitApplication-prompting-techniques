@@ -76,13 +76,13 @@ def generate_embeddings(text):
 
 def search_api(query: str) -> str:  
     search_client = SearchClient(vector_store_address, index_name, credential_search)  
-    vector = Vector(value=generate_embeddings(query), k=10, fields="contentVector")  
+    vector = Vector(value=generate_embeddings(query), k=5, fields="contentVector")  
 
     r = search_client.search(  
         search_text=query,  
         vectors=[vector],
         select=["content", "title"],
-        top=3
+        top=5
     )  
     results = [doc['content'] for doc in r]
     print("\n".join(results))
