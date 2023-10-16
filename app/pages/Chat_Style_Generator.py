@@ -136,12 +136,9 @@ with st.form("send_intake"):
             chat_log = '<<BEGIN SELLER INTAKE CHAT>>\n\n%s\n\n<<END SELLER INTAKE CHAT>>' % text_block
             with st.expander("💬 Chat Log"):
                 st.write(chat_log)
-            #save_file('logs/log_%s_chat.txt' % time(), chat_log)
             conversation.append({'role': 'user', 'content': chat_log})
             with st.spinner('Creating notes...'):
                 notes, tokens = chatbot(conversation)
-            #print('\n\nNotes version of conversation:\n\n%s' % notes)
-            #save_file('logs/log_%s_notes.txt' % time(), notes)
             with st.expander("📖 Notes"):
                 st.write(notes)
 
@@ -151,7 +148,5 @@ with st.form("send_intake"):
             conversation.append({'role': 'user', 'content': notes})
             with st.spinner('Creating email a la Gordon...'):
                 email, tokens = chatbot(conversation)
-            #save_file('logs/log_%s_diagnosis.txt' % time(), report)
-            #print('\n\nHypothesis Report:\n\n%s' % report)
             with st.expander("📩 Email"):
                 st.write(email)

@@ -36,6 +36,7 @@ with st.sidebar:
             del st.session_state[key]
         st.session_state["email_text"] = ""
         st.session_state["email_to"] = ""
+        st.session_state["email_from"] = ""
         st.rerun()
 
 st.title("Cut and Paste (or write) an Email")
@@ -98,18 +99,12 @@ with st.form("mail_form"):
     if submitted:
         conversation = list()
         conversation.append({'role': 'system', 'content': open_file('../system_01_prepare_notes_copy_paste.md')})
-        #text_block = '\n\n'.join(all_messages)
-        #chat_log = '<<BEGIN SELLER INTAKE CHAT>>\n\n%s\n\n<<END SELLER INTAKE CHAT>>' % text_block
-        #with st.expander("💬 Chat Log"):
-        #    st.write(chat_log)
-        #save_file('logs/log_%s_chat.txt' % time(), chat_log)
         conversation.append({'role': 'user', 'content': f"[TO:  {email_to}]" + f"[FROM:  {email_from}]" + email_text})
         with st.spinner('Creating notes...'):
             notes, tokens = chatbot(conversation)
         with st.expander("📖 Notes"):
             st.write(notes)
 
-        #print('\n\nGenerating Hypothesis Report')
         conversation = list()
         conversation.append({'role': 'system', 'content': open_file('../system_02_email_copy_paste.md').replace('<<CONTEXT>>', search_api(notes))})
         conversation.append({'role': 'user', 'content': notes})
