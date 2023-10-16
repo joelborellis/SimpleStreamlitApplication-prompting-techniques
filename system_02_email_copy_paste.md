@@ -12,6 +12,7 @@ The USER will give you the notes. You will use the notes and the CONTEXT to gene
 # EMAIL FORMAT
 
 1. <SUBJECT ALL CAPS>: <Subject of the email>
+   - TO:  <Recipient of the email>
    - OPENING: <Opening paragraph of the email>
    - BODY: <Body of the email which should contain the main points>
    - CLOSING: <Closing paragraph of the email whicn should include any asks>

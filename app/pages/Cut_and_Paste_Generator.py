@@ -35,9 +35,11 @@ with st.sidebar:
         for key in st.session_state.keys():
             del st.session_state[key]
         st.session_state["email_text"] = ""
+        st.session_state["email_to"] = ""
         st.rerun()
 
-st.title("Gordon Lighfoot Email Generator")
+st.title("Cut and Paste (or write) an Email")
+st.write("Idea here is to take an email you might have already created and paste it in to be converted to a :red['Gordon Lightfoot'] email.  Or you can write an email in the text area.")
 
 st.divider()
 
@@ -88,6 +90,8 @@ def chatbot(conversation):
             exit(5)
 
 with st.form("mail_form"):
+    email_to = st.text_input("To: <email address>", key="email_to")
+    email_from = st.text_input("From: <your name>", key="email_from")
     email_text = st.text_area("Cut and Paste (or write) your email here:", "", key="email_text")
     submitted = st.form_submit_button("Make my email!")
     
@@ -99,7 +103,7 @@ with st.form("mail_form"):
         #with st.expander("💬 Chat Log"):
         #    st.write(chat_log)
         #save_file('logs/log_%s_chat.txt' % time(), chat_log)
-        conversation.append({'role': 'user', 'content': email_text})
+        conversation.append({'role': 'user', 'content': f"[TO:  {email_to}]" + f"[FROM:  {email_from}]" + email_text})
         with st.spinner('Creating notes...'):
             notes, tokens = chatbot(conversation)
         with st.expander("📖 Notes"):

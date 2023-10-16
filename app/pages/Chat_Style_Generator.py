@@ -36,7 +36,8 @@ with st.sidebar:
             del st.session_state[key]
         st.rerun()
 
-st.title("Gordon Lighfoot Email Generator")
+st.title("Chat with a Gordon Bot")
+st.write("Idea here is you engage in a chat with :red[Gordon] about an email you need to send.  He will prompt you for information about your email.  When you are done chatting hit the :blue[Done Chatting] button and your email will be generated")
 
 st.divider()
 
@@ -84,7 +85,7 @@ def search_api(query: str) -> str:
     )  
     for doc in r:
         results.append(f"[CITATIONS:  {doc['title']}]" + "\n" + (doc['content']))
-    print("\n".join(results))
+    #print("\n".join(results))
     return ("\n".join(results))
 
 # use this for capturing an easy to read transcript of the chat conversation
