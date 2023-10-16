@@ -29,15 +29,12 @@ search_client = SearchClient(
 
 with st.sidebar:
     #st.button("New Chat", type="primary")
-    st.write("💬 Start a new Email")
-    if st.button('New Email'):
+    st.write("💬 Start a new Chat")
+    if st.button('New Chat'):
         # Delete all the items in Session state
         for key in st.session_state.keys():
             del st.session_state[key]
         st.rerun()
-    #openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-    #"[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-    #"[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
 
 st.title("Gordon Lighfoot Email Generator")
 
@@ -75,6 +72,7 @@ def generate_embeddings(text):
     return embeddings
 
 def search_api(query: str) -> str:  
+    results = []
     search_client = SearchClient(vector_store_address, index_name, credential_search)  
     vector = Vector(value=generate_embeddings(query), k=5, fields="contentVector")  
 
@@ -84,9 +82,10 @@ def search_api(query: str) -> str:
         select=["content", "title"],
         top=5
     )  
-    results = [doc['content'] for doc in r]
+    for doc in r:
+        results.append(f"[CITATIONS:  {doc['title']}]" + "\n" + (doc['content']))
     print("\n".join(results))
-    return "\n".join(results)
+    return ("\n".join(results))
 
 # use this for capturing an easy to read transcript of the chat conversation
 all_messages = list()
@@ -128,7 +127,7 @@ st.divider()
 
 with st.form("send_intake"):
         st.write("Click to start generating notes, suggestions and actions")
-        submitted = st.form_submit_button("Done")
+        submitted = st.form_submit_button("Done chatting ..... Write my email!")
         if submitted:
             conversation = list()
             conversation.append({'role': 'system', 'content': open_file('../system_02_prepare_notes.md')})
