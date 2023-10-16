@@ -101,7 +101,7 @@ for msg in st.session_state.messages_chatbot:
         all_messages.append('USER: %s' % msg["content"])
     elif msg["role"] == "assistant":
         st.chat_message(msg["role"]).write(msg["content"])
-        all_messages.append('INTAKE: %s' % msg["content"])
+        all_messages.append('BOT: %s' % msg["content"])
 
 if prompt := st.chat_input():
 
@@ -133,7 +133,7 @@ with st.form("send_intake"):
             conversation = list()
             conversation.append({'role': 'system', 'content': open_file('../system_02_prepare_notes.md')})
             text_block = '\n\n'.join(all_messages)
-            chat_log = '<<BEGIN SELLER INTAKE CHAT>>\n\n%s\n\n<<END SELLER INTAKE CHAT>>' % text_block
+            chat_log = '<<BEGIN CHAT>>\n\n%s\n\n<<END CHAT>>' % text_block
             with st.expander("💬 Chat Log"):
                 st.write(chat_log)
             conversation.append({'role': 'user', 'content': chat_log})
