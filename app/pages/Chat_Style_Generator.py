@@ -101,7 +101,7 @@ for msg in st.session_state.messages_chatbot:
         all_messages.append('USER: %s' % msg["content"])
     elif msg["role"] == "assistant":
         st.chat_message(msg["role"]).write(msg["content"])
-        all_messages.append('BOT: %s' % msg["content"])
+        all_messages.append('GORDON BOT: %s' % msg["content"])
 
 if prompt := st.chat_input():
 
