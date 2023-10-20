@@ -10,7 +10,7 @@ st.write('This app generates emails in the style of the lyrics from a :blue[Gord
 st.divider()
 st.write('1:  Engage in a chat that will help you create the content for your email.')
 st.subheader(":red[OR]")
-st.write('2:  Cut and paste or write in the contents of your email.')
+st.write('2:  Copy and paste or write in the contents of your email.')
 
 image = Image.open('../images/gordon.jpg')
 
