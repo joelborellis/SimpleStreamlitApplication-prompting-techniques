@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from azure.search.documents import SearchClient
 from azure.search.documents.models import Vector
 from azure.core.credentials import AzureKeyCredential
+from PIL import Image
 
 load_dotenv()
 
@@ -97,10 +98,10 @@ if "messages_chatbot" not in st.session_state:
 # display the flow of chat bubbles between user and assistant
 for msg in st.session_state.messages_chatbot:
     if msg["role"] == "user":
-        st.chat_message(msg["role"]).write(msg["content"])
+        st.chat_message(msg["role"], avatar=Image.open('../images/User.png')).write(msg["content"])
         all_messages.append('USER: %s' % msg["content"])
     elif msg["role"] == "assistant":
-        st.chat_message(msg["role"]).write(msg["content"])
+        st.chat_message(msg["role"], avatar=Image.open('../images/Gordon.png')).write(msg["content"])
         all_messages.append('GORDON BOT: %s' % msg["content"])
 
 if prompt := st.chat_input():
@@ -111,7 +112,7 @@ if prompt := st.chat_input():
     st.session_state.messages_chatbot.append({"role": "user", "content": prompt})
 
     # now fill the user chat bubble and append to all_messages - this is used to make an easy to read conversation
-    st.chat_message("user").write(prompt)
+    st.chat_message("user", avatar=Image.open('../images/User.png')).write(prompt)
 
     # now call the openai chat completion and get the response into a string
     #msg, tokens = chatbot(st.session_state.messages_chatbot)
@@ -122,7 +123,7 @@ if prompt := st.chat_input():
     st.session_state.messages_chatbot.append(msg)
 
     # now fill the assistant chat bubble and append to all_messages - this is used to make an easy to read conversation
-    st.chat_message("assistant").write(msg.content)
+    st.chat_message("assistant", avatar=Image.open('../images/Gordon.png')).write(msg.content)
 
 st.divider()
 
