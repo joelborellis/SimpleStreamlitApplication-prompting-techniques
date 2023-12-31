@@ -1,24 +1,19 @@
 import streamlit as st
 import os
-import openai
-from langchain.llms import OpenAI
 from azure.search.documents import SearchClient
-from azure.search.documents.models import Vector
 from azure.core.credentials import AzureKeyCredential
+from openai import AzureOpenAI
+from azure.search.documents.models import (
+    VectorizedQuery,
+)
 from dotenv import load_dotenv
 
 load_dotenv()
 
-openai.api_type = os.environ.get("AZURE_OPENAI_TYPE")
-openai.api_base = os.environ.get("AZURE_OPENAI_ENDPOINT")
-openai.api_version = os.environ.get("AZURE_OPENAI_API_VERSION")
-openai.api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-model: str = os.environ.get("AZURE_OPENAI_MODEL_NAME")
-
+# Search stuff
 vector_store_address: str = os.environ.get("AZURE_SEARCH_SERVICE_ENDPOINT")
 vector_store_key: str = os.environ.get("AZURE_SEARCH_ADMIN_KEY")
-model_embed: str = os.environ.get("AZURE_OPENAI_EMBEDDING_DEPLOYED_MODEL")
-index_name: str = "lightfoot-vector-index"
+index_name: str = os.environ.get("AZURE_SEARCH_INDEX_NAME")
 credential_search = AzureKeyCredential(vector_store_key)
 
 search_client = SearchClient(
@@ -26,6 +21,17 @@ search_client = SearchClient(
         index_name=index_name,
         credential=credential_search,
     )
+
+# OpenAI Stuff
+model: str = os.environ.get("AZURE_OPENAI_MODEL_NAME")
+model_embed: str = os.environ.get("AZURE_OPENAI_EMBEDDING_DEPLOYED_MODEL")
+
+openai_client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
+    api_version="2023-12-01-preview",
+    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+)
+
 
 with st.sidebar:
     #st.button("New Chat", type="primary")
@@ -55,23 +61,19 @@ def open_file(filepath):
         return infile.read()
 
 # Function to generate embeddings for title and content fields, also used for query embeddings
-def generate_embeddings(text):
-    response = openai.Embedding.create(
-        input=text, engine="text-embedding-ada-002")
-    embeddings = response['data'][0]['embedding']
-    return embeddings
+def generate_embeddings(text, model="text-embedding-ada-002"):
+   text = text.replace("\n", " ")
+   return openai_client.embeddings.create(input = [text], model=model).data[0].embedding
 
 def search_api(query: str) -> str:  
     results = []
-    search_client = SearchClient(vector_store_address, index_name, credential_search)  
-    vector = Vector(value=generate_embeddings(query), k=5, fields="contentVector")  
-
+    vector_query = VectorizedQuery(vector=generate_embeddings(query), k_nearest_neighbors=5, fields="contentVector")
+  
     r = search_client.search(  
-        search_text=query,  
-        vectors=[vector],
-        select=["content", "title"],
-        top=5
-    )  
+        search_text=None,  
+        vector_queries= [vector_query],
+        select=["title", "sourcefile", "category", "content"],
+    ) 
 
     for doc in r:
         results.append(f"[CITATIONS:  {doc['title']}]" + "\n" + (doc['content']))
@@ -79,13 +81,17 @@ def search_api(query: str) -> str:
     return ("\n".join(results))
 
 def chatbot(conversation):
- 
-    while True:
         try:
-            response = openai.ChatCompletion.create(engine=model, temperature=0.0, max_tokens=2000, messages=conversation)
-            text = response['choices'][0]['message']['content']
+            #response = openai.ChatCompletion.create(engine=model, temperature=0.0, max_tokens=2000, messages=conversation)
+            #text = response['choices'][0]['message']['content']
+
+            response = openai_client.chat.completions.create(
+                        model=model, # model = "deployment_name".
+                        messages=conversation
+                    )
+            text = response.choices[0].message.content
             
-            return text, response['usage']['total_tokens']
+            return text, response.usage.total_tokens
         except Exception as oops:
             print(f'\n\nError communicating with OpenAI: "{oops}"')
             exit(5)
@@ -101,6 +107,7 @@ with st.form("mail_form"):
         conversation.append({'role': 'user', 'content': f"[RECIPIENT:  {email_to}]" + " " + email_text})
         with st.spinner('Creating notes...'):
             notes, tokens = chatbot(conversation)
+            #print(tokens)
         with st.expander("📖 Notes"):
             st.write(notes)
 

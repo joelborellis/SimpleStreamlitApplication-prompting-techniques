@@ -1,24 +1,20 @@
-import openai
 import streamlit as st
 import os
 from dotenv import load_dotenv
 from azure.search.documents import SearchClient
-from azure.search.documents.models import Vector
 from azure.core.credentials import AzureKeyCredential
 from PIL import Image
+from openai import AzureOpenAI
+from azure.search.documents.models import (
+    VectorizedQuery,
+)
 
 load_dotenv()
 
-openai.api_type = os.environ.get("AZURE_OPENAI_TYPE")
-openai.api_base = os.environ.get("AZURE_OPENAI_ENDPOINT")
-openai.api_version = os.environ.get("AZURE_OPENAI_API_VERSION")
-openai.api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-model: str = os.environ.get("AZURE_OPENAI_MODEL_NAME")
-
+# Search stuff
 vector_store_address: str = os.environ.get("AZURE_SEARCH_SERVICE_ENDPOINT")
 vector_store_key: str = os.environ.get("AZURE_SEARCH_ADMIN_KEY")
-model_embed: str = os.environ.get("AZURE_OPENAI_EMBEDDING_DEPLOYED_MODEL")
-index_name: str = "lightfoot-vector-index"
+index_name: str = os.environ.get("AZURE_SEARCH_INDEX_NAME")
 credential_search = AzureKeyCredential(vector_store_key)
 
 search_client = SearchClient(
@@ -26,6 +22,16 @@ search_client = SearchClient(
         index_name=index_name,
         credential=credential_search,
     )
+
+# OpenAI Stuff
+model: str = os.environ.get("AZURE_OPENAI_MODEL_NAME")
+model_embed: str = os.environ.get("AZURE_OPENAI_EMBEDDING_DEPLOYED_MODEL")
+
+openai_client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
+    api_version="2023-12-01-preview",
+    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+)
 
 
 with st.sidebar:
@@ -52,38 +58,34 @@ def open_file(filepath):
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as infile:
         return infile.read()
     
-def chatbot(conversation, engine=model, temperature=0, max_tokens=2000):
-    max_retry = 7
-    retry = 0    
-
-    while True:
+def chatbot(conversation):
         try:
-            response = openai.ChatCompletion.create(engine=engine, messages=conversation, temperature=temperature, max_tokens=max_tokens)
-            text = response['choices'][0]['message']['content']
+            response = openai_client.chat.completions.create(
+                        model=model, # model = "deployment_name".
+                        messages=conversation
+                    )
+            text = response.choices[0].message.content
             
-            return text, response['usage']['total_tokens']
+            return text, response.usage.total_tokens
         except Exception as oops:
             print(f'\n\nError communicating with OpenAI: "{oops}"')
             exit(5)
 
-# Function to generate embeddings for title and content fields, also used for query embeddings
-def generate_embeddings(text):
-    response = openai.Embedding.create(
-        input=text, engine="text-embedding-ada-002")
-    embeddings = response['data'][0]['embedding']
-    return embeddings
+
+def generate_embeddings(text, model="text-embedding-ada-002"):
+   text = text.replace("\n", " ")
+   return openai_client.embeddings.create(input = [text], model=model).data[0].embedding
 
 def search_api(query: str) -> str:  
     results = []
-    search_client = SearchClient(vector_store_address, index_name, credential_search)  
-    vector = Vector(value=generate_embeddings(query), k=5, fields="contentVector")  
-
+    vector_query = VectorizedQuery(vector=generate_embeddings(query), k_nearest_neighbors=5, fields="contentVector")
+  
     r = search_client.search(  
-        search_text=query,  
-        vectors=[vector],
-        select=["content", "title"],
-        top=5
-    )  
+        search_text=None,  
+        vector_queries= [vector_query],
+        select=["title", "sourcefile", "category", "content"],
+    ) 
+
     for doc in r:
         results.append(f"[CITATIONS:  {doc['title']}]" + "\n" + (doc['content']))
     #print("\n".join(results))
@@ -97,6 +99,7 @@ if "messages_chatbot" not in st.session_state:
 
 # display the flow of chat bubbles between user and assistant
 for msg in st.session_state.messages_chatbot:
+    #print(msg["content"])
     if msg["role"] == "user":
         st.chat_message(msg["role"], avatar=Image.open('../images/User.png')).write(msg["content"])
         all_messages.append('USER: %s' % msg["content"])
@@ -105,8 +108,6 @@ for msg in st.session_state.messages_chatbot:
         all_messages.append('GORDON BOT: %s' % msg["content"])
 
 if prompt := st.chat_input():
-
-    #print(search_api(prompt))
     # set the system message and user message into the session state
     st.session_state.messages_chatbot.append({"role": "system", "content": open_file('../system_01_intake.md')})
     st.session_state.messages_chatbot.append({"role": "user", "content": prompt})
@@ -114,13 +115,14 @@ if prompt := st.chat_input():
     # now fill the user chat bubble and append to all_messages - this is used to make an easy to read conversation
     st.chat_message("user", avatar=Image.open('../images/User.png')).write(prompt)
 
-    # now call the openai chat completion and get the response into a string
-    #msg, tokens = chatbot(st.session_state.messages_chatbot)
-    response = openai.ChatCompletion.create(engine=model, temperature=0.0, max_tokens=1200, messages=st.session_state.messages_chatbot)
+    response = openai_client.chat.completions.create(
+                        model=model, # model = "deployment_name".
+                        messages=st.session_state.messages_chatbot
+                    )
     msg = response.choices[0].message
 
     # add the response from the llm to the session state
-    st.session_state.messages_chatbot.append(msg)
+    st.session_state.messages_chatbot.append({'role': 'assistant', 'content': msg.content})
 
     # now fill the assistant chat bubble and append to all_messages - this is used to make an easy to read conversation
     st.chat_message("assistant", avatar=Image.open('../images/Gordon.png')).write(msg.content)
